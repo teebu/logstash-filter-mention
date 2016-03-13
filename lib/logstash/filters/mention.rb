@@ -50,9 +50,20 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
         e["post_id"] = event["@metadata"]["_id"]
         object.each{|k,v| e[k] = v}
         @logger.debug("Created a mention event", :event => e)
-
         filter_matched(e)
         yield e
+
+        #create second event of type 'appDoc' to set 'isMentioned' = true
+        mentionID = object['identifier'] || object['trackId']
+        if not mentionID.nil?
+          e2 = LogStash::Event.new()
+          e2["type"] = 'appDoc'
+          e2["isMentioned"] = true
+          e2.tags = ['mentioned']
+          filter_matched(e2)
+          yield e2
+        end
+
 
       end
     end
