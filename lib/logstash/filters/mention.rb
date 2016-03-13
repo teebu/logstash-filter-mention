@@ -26,7 +26,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
 
         e = LogStash::Event.new()
         e["type"] = "mention"
-        e["post_id"] = event["_id"]
+        e["post_id"] = event['@metadata']['_id']
         apps_object.to_hash.each{|k,v| e[k] = v}
         @logger.debug("Created a mention event", :event => event)
         yield e
