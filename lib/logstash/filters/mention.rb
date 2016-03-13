@@ -9,8 +9,27 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
 
   config_name "mention"
 
+  #accept an argument of field name, and type and set them in the filter
+  # array object name in event['doc'] to get the data
+  config :mention_field, :validate => :string, :default => "mentioned_apps_objects"
+
+  #set event type
+  config :mention_type, :validate => :string, :default => "mention"
+
   # A new clone will be created with the given type for each type in this list.
   #config :clones, :validate => :array, :default => []
+
+  # Example:
+  #
+  # filter {
+  #
+  #   mention {
+  #     mention_field => "mentioned_apps_objects"
+  #     mention_type => "test"
+  #     add_tag => ["sample_tag"]
+  #   }
+  # }
+
 
   public
   def register
@@ -21,14 +40,18 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
   def filter(event)
     return unless filter?(event)
 
-    if event["doc"] and event["doc"]["mentioned_apps_objects"].is_a?(Array)
-      event["doc"]["mentioned_apps_objects"].each do |apps_object|
+    if event["doc"] and event["doc"][@mention_field].is_a?(Array)
+      event["doc"][@mention_field].each do |object|
+        next unless object.is_a?(Hash)
 
         e = LogStash::Event.new()
-        e["type"] = "mention"
-        e["post_id"] = event['@metadata']['_id']
-        apps_object.to_hash.each{|k,v| e[k] = v}
-        @logger.debug("Created a mention event", :event => event)
+
+        e["type"] = @mention_type
+        e["post_id"] = event["@metadata"]["_id"]
+        object.each{|k,v| e[k] = v}
+        @logger.debug("Created a mention event", :event => e)
+
+        filter_matched(e)
         yield e
 
       end
