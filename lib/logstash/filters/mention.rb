@@ -2,8 +2,8 @@
 require "logstash/filters/base"
 require "logstash/namespace"
 
-# The clone filter is for duplicating events.
-# A clone will be made for each type in the clone list.
+# mention filter will create events for every mention
+# and a second event with the type 'appDoc' will be created with a single value, 'isMentioned' = true
 # The original event is left unchanged.
 class LogStash::Filters::Mention < LogStash::Filters::Base
 
@@ -15,9 +15,6 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
 
   #set event type
   config :mention_type, :validate => :string, :default => "mention"
-
-  # A new clone will be created with the given type for each type in this list.
-  #config :clones, :validate => :array, :default => []
 
   # Example:
   #
