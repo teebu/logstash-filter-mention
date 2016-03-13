@@ -55,11 +55,11 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
 
         #create second event of type 'appDoc' to set 'isMentioned' = true
         mention_id = object['identifier'] || object['trackId']
-        if !mentionID.nil?
+        if !mention_id.nil?
           e2 = LogStash::Event.new()
           e2["type"] = "appDoc"
           e2["isMentioned"] = true
-          e2.tags = ['mentioned']
+          #(e2['tags'] ||= []) << 'mentioned'
           filter_matched(e2)
           yield e2 #send second event
         end
