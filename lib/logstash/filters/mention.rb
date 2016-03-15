@@ -14,7 +14,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
   config :mention_field, :validate => :string, :default => "mentioned_apps_objects"
 
   #set event type
-  config :mention_type, :validate => :string, :default => "wordpressDoc"
+  config :mention_type, :validate => :string, :default => "wordpressPost"
 
   # Example:
   #
@@ -45,27 +45,22 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
         e = event.clone
         mention_id = object['identifier'] || object['trackId']
 
-        puts "size: " + event["doc"][@mention_field].size.to_s
-        puts "index: " + index.to_s
-        puts event["@metadata"]["_id"].to_s + "_" + mention_id
+        #puts "size: " + event["doc"][@mention_field].size.to_s
+        #puts "index: " + index.to_s
+        #puts event["@metadata"]["_id"].to_s + "_" + mention_id
 
         if !mention_id.nil?
 
           e["type"] = @mention_type
           e["@metadata"]["_id"] = event["@metadata"]["_id"].to_s + "_" + mention_id
-          #object.each{|k,v| e[k] = v}
+          e["doc"][@mention_field] = [object] #empty the mention array field
 
-          #e["doc"][@mention_field].clear #stoped the loop
-          e["doc"][@mention_field] = [] #empty the mention array field
-          e["doc"][@mention_field].push(object) #set each object element
-
-          (e['tags'] ||= []) << e["@metadata"]["_id"]
+          #testing
+          #(e['tags'] ||= []) << e["@metadata"]["_id"]
 
           @logger.debug("Created a mention event", :event => e)
           filter_matched(e)
-
-          e.remove("doc")
-
+          #e.remove("doc")
           yield e #send new event
 
           #create second event of type 'appDoc' to set 'isMentioned' = true
