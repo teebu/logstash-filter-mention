@@ -2,8 +2,8 @@
 require "logstash/filters/base"
 require "logstash/namespace"
 
-# mention filter will create events for every mention
-# and a second event with the type 'appDoc' will be created with a single value, 'isMentioned' = true
+# The clone filter is for duplicating events.
+# A clone will be made for each type in the clone list.
 # The original event is left unchanged.
 class LogStash::Filters::Mention < LogStash::Filters::Base
 
@@ -14,18 +14,11 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
   config :mention_field, :validate => :string, :default => "mentioned_apps_objects"
 
   #set event type
-  config :mention_type, :validate => :string, :default => "wordpressPost"
+  config :mention_type, :validate => :string, :default => "mention"
 
-  # Example:
-  #
-  # filter {
-  #
-  #   mention {
-  #     mention_field => "mentioned_apps_objects"
-  #     mention_type => "test"
-  #     add_tag => ["sample_tag"]
-  #   }
-  # }
+  # A new clone will be created with the given type for each type in this list.
+  #config :clones, :validate => :array, :default => []
+
 
 
   public
@@ -37,7 +30,12 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
   def filter(event)
     return unless filter?(event)
 
+
     if event["doc"] and event["doc"][@mention_field].is_a?(Array)
+
+      event["doc"][@mention_field] = event["doc"][@mention_field].inject([]) { |result,h| result << h unless result.include?(h); result }
+      event["doc"]["mentioned_apps"] = event["doc"]["mentioned_apps"].uniq
+
       event["doc"][@mention_field].each_with_index do |object, index|
         next unless object.is_a?(Hash)
 
@@ -46,6 +44,9 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
         mention_id = object['identifier'] || object['trackId']
 
         #puts "size: " + event["doc"][@mention_field].size.to_s
+        #puts "size2: " + event["doc"]["mentioned_apps"].size.to_s
+        #puts "array: " + event["doc"]["mentioned_apps"].to_s
+
         #puts "index: " + index.to_s
         #puts event["@metadata"]["_id"].to_s + "_" + mention_id
 
@@ -66,6 +67,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
           #create second event of type 'appDoc' to set 'isMentioned' = true
           e2 = LogStash::Event.new()
           e2["type"] = "appDoc"
+          e2["@metadata"]["_id"] = mention_id
           e2["isMentioned"] = true
           #(e2['tags'] ||= []) << 'mentioned'
           filter_matched(e2)
@@ -74,6 +76,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
         end
       end
     end
+
 
     # @clones.each do |type|
     #   clone = event.clone
