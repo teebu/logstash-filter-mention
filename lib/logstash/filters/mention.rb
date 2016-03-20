@@ -14,7 +14,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
   config :mention_field, :validate => :string, :default => "mentioned_apps_objects"
 
   #set event type
-  config :mention_type, :validate => :string, :default => "mention"
+  config :mention_type, :validate => :string, :default => "wordpressDoc"
 
   # A new clone will be created with the given type for each type in this list.
   #config :clones, :validate => :array, :default => []
@@ -33,6 +33,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
 
     if event["doc"] and event["doc"][@mention_field].is_a?(Array)
 
+      #remove duplicates
       event["doc"][@mention_field] = event["doc"][@mention_field].inject([]) { |result,h| result << h unless result.include?(h); result }
       event["doc"]["mentioned_apps"] = event["doc"]["mentioned_apps"].uniq
 
@@ -55,6 +56,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
           e["type"] = @mention_type
           e["@metadata"]["_id"] = event["@metadata"]["_id"].to_s + "_" + mention_id
           e["doc"][@mention_field] = [object] #empty the mention array field
+          e["doc"]["doc_type"] = @mention_field #set doc_type to the passed doc_type
 
           #testing
           #(e['tags'] ||= []) << e["@metadata"]["_id"]
