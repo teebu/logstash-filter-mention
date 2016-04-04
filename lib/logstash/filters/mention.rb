@@ -56,7 +56,7 @@ class LogStash::Filters::Mention < LogStash::Filters::Base
           e["type"] = @mention_type
           e["@metadata"]["_id"] = event["@metadata"]["_id"].to_s + "_" + mention_id
           e["doc"][@mention_field] = [object] #empty the mention array field
-          e["doc"]["doc_type"] = @mention_field #set doc_type to the passed doc_type
+          e["doc"]["doc_type"] = @mention_type #set doc_type to the passed doc_type
 
           #testing
           #(e['tags'] ||= []) << e["@metadata"]["_id"]
